@@ -15,13 +15,46 @@
 
 ## Быстрый запуск с локальной моделью
 
-Нужен Docker с Docker Compose v2. Из каталога проекта создайте настройки, сохранив существующий `.env`, если он уже есть:
+Полный Docker-вариант работает на Windows, macOS и Linux: приложение, PostgreSQL и Ollama запускаются вместе. Модель в текущей конфигурации использует CPU. Для ускорения на Mac с Apple Silicon или Windows с поддерживаемой видеокартой используйте нативную Ollama — инструкции приведены ниже.
+
+Нужны Git и Docker с Docker Compose v2. Go, Node.js и отдельная установка Ollama для полного Docker-варианта не требуются.
+
+| Система | Подготовка |
+| --- | --- |
+| Windows | Установите [Git](https://git-scm.com/downloads/win) и [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/). В Docker Desktop используйте Linux-контейнеры; рекомендуемый вариант — WSL 2. Запустите Docker Desktop до выполнения команд. |
+| macOS | Установите Git и [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) для своего процессора: Apple Silicon или Intel. Запустите Docker Desktop. |
+| Linux | Установите Git, [Docker Engine](https://docs.docker.com/engine/install/) и [плагин Compose](https://docs.docker.com/compose/install/linux/). |
+
+### Windows: PowerShell
+
+Откройте PowerShell и скачайте проект:
+
+```powershell
+git clone https://github.com/viktorov13/kopeyka.git
+cd kopeyka
+
+if (-not (Test-Path .env)) {
+    Copy-Item .env.ollama.example .env
+}
+notepad .env
+```
+
+В открытом файле укажите `TELEGRAM_BOT_TOKEN` и сохраните изменения. Если проект уже скачан, сначала перейдите в его каталог; повторное клонирование не требуется.
+
+### macOS и Linux: Терминал
 
 ```sh
+git clone https://github.com/viktorov13/kopeyka.git
+cd kopeyka
+
 test -f .env || cp .env.ollama.example .env
 ```
 
-Для подключения Telegram укажите в `.env` значение `TELEGRAM_BOT_TOKEN`, полученное у [@BotFather](https://t.me/BotFather) через `/newbot`. Без токена работает веб-панель, бот отключён.
+Откройте `.env` в текстовом редакторе и укажите `TELEGRAM_BOT_TOKEN`. Если проект уже скачан, выполняйте команды из существующего каталога. Команды копирования выше сохраняют существующий `.env` вместе с токеном.
+
+### Запуск на любой из этих систем
+
+Токен выдаёт [@BotFather](https://t.me/BotFather) через `/newbot`. Без токена работает веб-панель, бот отключён. Вписывайте токен непосредственно в локальный `.env`; публикуемые примеры оставлены пустыми.
 
 Запустите приложение, PostgreSQL и Ollama одной командой:
 
@@ -40,9 +73,11 @@ docker compose -f compose.yaml -f compose.ollama.yaml logs -f app ollama-model
 docker compose -f compose.yaml -f compose.ollama.yaml down
 ```
 
-Эти команды также доступны как `make ollama-up`, `make ollama-logs` и `make ollama-down`. Данные и веса модели хранятся в именованных томах. Опция `down -v` удаляет их.
+Если установлен `make`, эти команды также доступны как `make ollama-up`, `make ollama-logs` и `make ollama-down`. В обычном PowerShell используйте команды `docker compose` напрямую. Данные и веса модели хранятся в именованных томах. Опция `down -v` удаляет их.
 
-Модель в этом варианте работает на CPU. Скорость зависит от оборудования; если обработка не укладывается в таймаут, используйте нативную Ollama с ускорением или другую модель с поддержкой инструментов. API-ключ не нужен. Интернет требуется для загрузки образов и модели, а также для работы Telegram.
+Скорость зависит от оборудования; если обработка не укладывается в таймаут, используйте нативную Ollama с ускорением или другую модель с поддержкой инструментов. Первый запрос после запуска или простоя может включать загрузку модели в память. API-ключ не нужен. Интернет требуется для загрузки образов и модели, а также для работы Telegram.
+
+При запуске на другом компьютере создаётся новая база. GitHub содержит исходники и примеры настроек; существующие расходы и локальный `.env` нужно переносить отдельно. Для одного Telegram-токена запускайте только один экземпляр бота.
 
 ## Telegram
 
@@ -65,45 +100,95 @@ ID виден в списке расходов; вместо `#12` исполь�
 
 Если бот не отвечает, проверьте журнал `app`. После изменения `.env` повторите `up -d` с теми же Compose-файлами: `restart` не применяет новое окружение. Для одного токена должен работать один процесс polling; у бота не должно быть активного webhook.
 
-## Другие варианты запуска
+## Нативная Ollama на macOS и Windows
 
-### Нативная Ollama на macOS
+В этом варианте Ollama работает на самом компьютере, а приложение и PostgreSQL — в Docker Desktop. На Apple Silicon используется Metal; на Windows ускорение зависит от поддерживаемой видеокарты и драйвера. См. [поддержку оборудования Ollama](https://docs.ollama.com/gpu) и [Ollama для Windows](https://docs.ollama.com/windows).
 
-На Mac нативная Ollama может использовать Apple GPU. Приложение и база остаются в Docker Desktop.
+Если ранее запускали полный Docker-стек, сначала остановите его из того же каталога проекта:
 
-1. Установите [Ollama](https://ollama.com/download) или выполните `brew install ollama`.
-2. Запустите один сервер с контекстом 8192 токена. Например, в отдельном терминале:
+```sh
+docker compose -f compose.yaml -f compose.ollama.yaml down
+```
+
+Выполняйте остановку без `-v`: расходы и скачанная контейнерная модель сохранятся. Затем выберите инструкцию своей системы.
+
+### macOS: Ollama с Metal
+
+1. Установите [Ollama для macOS](https://ollama.com/download/mac). При установке приложения откройте его один раз и разрешите добавить команду `ollama` в PATH, если появится такой запрос. При установленном Homebrew доступна команда `brew install ollama`.
+2. Для запуска вручную завершите уже работающий сервер Ollama: выйдите из приложения через меню Ollama → Quit либо остановите Homebrew-службу командой `brew services stop ollama`, если используете её. Затем в отдельном окне Терминала запустите:
 
    ```sh
    OLLAMA_CONTEXT_LENGTH=8192 OLLAMA_NO_CLOUD=1 ollama serve
    ```
 
-   Если Ollama уже работает как приложение или служба, используйте этот экземпляр и настройте его контекст перед перезапуском; второй сервер на том же порту не запустится.
-
-3. В другом терминале скачайте модель:
+3. В другом окне Терминала скачайте модель и проверьте сервер:
 
    ```sh
    ollama pull qwen3:4b-instruct-2507-q4_K_M
-   ollama list
+   curl http://localhost:11434/api/version
    ```
 
-4. Создайте `.env` командой `test -f .env || cp .env.ollama.example .env`. Для существующего файла проверьте настройки:
+Если сервер уже настроен как приложение или служба с контекстом 8192 и `OLLAMA_NO_CLOUD=1`, используйте его. Одновременно нужен только один сервер на порту `11434`. На Intel Mac этот вариант использует CPU; ускорение Metal относится к Apple Silicon.
 
-   ```dotenv
-   BOT_MODE=llm
-   LLM_BASE_URL=http://host.docker.internal:11434/v1
-   LLM_API_KEY=
-   LLM_MODEL=qwen3:4b-instruct-2507-q4_K_M
-   LLM_TIMEOUT=60s
-   LLM_MAX_STEPS=6
-   LLM_REASONING_EFFORT=none
+### Windows: нативная Ollama
+
+1. Установите [Ollama для Windows](https://ollama.com/download/windows). Для GPU нужен поддерживаемый адаптер и драйвер, указанные в [системных требованиях](https://docs.ollama.com/windows).
+2. Выйдите из приложения Ollama через значок в системном трее, если оно запущено. Откройте новое окно PowerShell и запустите сервер:
+
+   ```powershell
+   $env:OLLAMA_CONTEXT_LENGTH = "8192"
+   $env:OLLAMA_NO_CLOUD = "1"
+   ollama serve
    ```
 
-5. Запустите приложение и PostgreSQL: `docker compose up --build -d`.
+3. Во втором окне PowerShell скачайте модель и проверьте сервер:
 
-Здесь `compose.ollama.yaml` не нужен. `host.docker.internal` — адрес компьютера из контейнера Docker Desktop. Используйте полный тег Instruct-модели: короткий `qwen3:4b` может обозначать другую версию.
+   ```powershell
+   ollama pull qwen3:4b-instruct-2507-q4_K_M
+   Invoke-RestMethod http://localhost:11434/api/version
+   ```
 
-При переходе с модели в Docker сначала остановите прежний стек командой `docker compose -f compose.yaml -f compose.ollama.yaml down`. Расходы сохранятся.
+Если команда `ollama` не найдена после установки, заново откройте PowerShell. Как и на macOS, для запуска вручную оставьте окно с `ollama serve` открытым, пока работает бот.
+
+### Подключение приложения к нативной модели
+
+Для обеих систем используйте `.env`, созданный по инструкции быстрого запуска. Сохраните `TELEGRAM_BOT_TOKEN` и проверьте настройки LLM:
+
+```dotenv
+BOT_MODE=llm
+LLM_BASE_URL=http://host.docker.internal:11434/v1
+LLM_API_KEY=
+LLM_MODEL=qwen3:4b-instruct-2507-q4_K_M
+LLM_TIMEOUT=60s
+LLM_MAX_STEPS=6
+LLM_REASONING_EFFORT=none
+```
+
+Используйте полный тег Instruct-модели: короткий `qwen3:4b` может обозначать другую версию. Из каталога проекта запустите только базовый Compose:
+
+```sh
+docker compose -f compose.yaml up --build -d --wait
+```
+
+`host.docker.internal` — адрес компьютера из контейнера Docker Desktop. Проверьте доступ из приложения:
+
+```sh
+docker compose -f compose.yaml exec -T app wget -q -O - http://host.docker.internal:11434/api/version
+```
+
+Если сервер отвечает на компьютере, но проверка из контейнера не проходит, проверьте сетевые настройки и firewall Docker Desktop. До устранения соединения можно использовать полный Docker-вариант из быстрого запуска.
+
+При нативной модели запускайте приложение с одним `compose.yaml`: подключение `compose.ollama.yaml` снова направит запросы в контейнерную Ollama. Для остановки приложения и базы используйте `docker compose -f compose.yaml down`. При ручном запуске нативного сервера его можно остановить через `Ctrl+C` в соответствующем окне терминала.
+
+Отправьте боту сообщение, затем выполните на компьютере:
+
+```sh
+ollama ps
+```
+
+Столбец `PROCESSOR` показывает фактическое использование CPU/GPU. До первого запроса список может быть пустым; при нехватке памяти модель может использовать CPU частично или полностью. Панель доступна по [http://localhost:8080](http://localhost:8080).
+
+## Другие варианты запуска
 
 ### Внешний совместимый API
 

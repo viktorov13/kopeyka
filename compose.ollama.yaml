@@ -1,0 +1,46 @@
+# Optional local LLM stack: docker compose -f compose.yaml -f compose.ollama.yaml up --build -d
+services:
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_CONTEXT_LENGTH: 8192
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  ollama-model:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b-instruct-2507-q4_K_M}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['exec ollama pull "$$LLM_MODEL"']
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    environment:
+      BOT_MODE: llm
+      LLM_BASE_URL: http://ollama:11434/v1
+      LLM_API_KEY: ""
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b-instruct-2507-q4_K_M}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-60s}
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-none}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-model:
+        condition: service_completed_successfully
+
+volumes:
+  ollama_data:

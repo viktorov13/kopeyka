@@ -1,0 +1,39 @@
+.env
+.env.*
+!.env.example
+!.env.ollama.example
+
+# Credentials and local service configuration
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+secrets/
+.aws/
+
+# Local data and database backups
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.dump
+*.sql.gz
+*.sql.bak
+*.backup
+backups/
+data/
+
+# Private assignment and development files
+test-task-expenses.md
+.DS_Store
+.idea/
+.vscode/
+bin/
+coverage.out
+coverage.html
+*.log
+tmp/
+node_modules/

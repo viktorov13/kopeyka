@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f6f2">
+    <title>Семейный бюджет · Расходы</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Главное меню">
+        <a class="brand" href="/" aria-label="Семейный бюджет, главная">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10.5 12 5l7 5.5V20H5z"/><path d="M9 20v-7h6v7"/></svg></span>
+          <span>семейный<br><strong>бюджет.</strong></span>
+        </a>
+        <div class="workspace-label">ВАШЕ ПРОСТРАНСТВО</div>
+        <nav class="navigation">
+          <a class="nav-item active" href="/" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Все расходы<span class="nav-dot"></span></a>
+          <button class="nav-item" id="help-button" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/></svg>Как это работает</button>
+        </nav>
+        <div class="sidebar-note">
+          <div class="note-symbol" aria-hidden="true">↗</div>
+          <h2>Маленькие записи.<br>Большая ясность.</h2>
+          <p>Соберите повседневные траты в одном месте — для всей семьи.</p>
+        </div>
+        <div class="bot-status"><span class="status-dot" id="bot-status-dot"></span><div><strong id="bot-status-title">Проверяем подключение</strong><span id="bot-status-text">Telegram-бот</span></div></div>
+        <div class="sidebar-footer">Меньше забот о деньгах.</div>
+      </aside>
+
+      <main id="main-content">
+        <header class="page-header">
+          <div><div class="eyebrow">ПОРЯДОК В ПОВСЕДНЕВНОМ</div><h1>Расходы семьи<span>.</span></h1><p>Всё, что потрачено, — на виду.</p></div>
+          <button type="button" class="button button-primary" id="add-expense"><span aria-hidden="true">＋</span> Добавить расход</button>
+        </header>
+
+        <div class="page-error" id="page-error" role="alert" hidden><span id="page-error-message"></span><button type="button" id="retry-load">Повторить</button></div>
+
+        <section class="overview" aria-label="Сводка расходов" aria-busy="true" id="overview">
+          <article class="summary-card total-card"><div class="card-label">Всего потрачено <span class="card-icon" aria-hidden="true">↗</span></div><div class="summary-value" id="total-amount">—</div><div class="card-foot" id="period-label">По выбранным фильтрам</div><div class="total-decoration" aria-hidden="true"></div></article>
+          <article class="summary-card"><div class="card-label">Количество расходов <svg viewBox="0 0 24 24" class="card-icon"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6m-6 4h6"/></svg></div><div class="summary-value" id="expense-count">—</div><div class="card-foot">Каждая трата учтена</div></article>
+          <article class="summary-card"><div class="card-label">Средний расход <svg viewBox="0 0 24 24" class="card-icon"><path d="M4 17h16M7 13V9m5 4V4m5 9v-3"/></svg></div><div class="summary-value" id="average-amount">—</div><div class="card-foot">На одну запись</div></article>
+        </section>
+
+        <section class="ledger-panel" aria-labelledby="ledger-title">
+          <div class="section-heading"><div class="section-title"><h2 id="ledger-title">История расходов</h2><span class="count-badge" id="ledger-count">0</span></div><div class="period-switch" aria-label="Быстрый выбор периода"><button type="button" data-period="month">Месяц</button><button type="button" data-period="week">7 дней</button><button type="button" data-period="all" class="selected" aria-pressed="true">Всё время</button></div></div>
+          <form id="filter-form" class="filters" role="search" autocomplete="off">
+            <label class="search-field"><span class="visually-hidden">Поиск по комментарию</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="filter-search" placeholder="Найти расход…" maxlength="100"></label>
+            <label class="filter-field"><span>Участник</span><select id="filter-user"><option value="">Все участники</option></select></label>
+            <label class="filter-field"><span>Категория</span><select id="filter-category"><option value="">Все категории</option></select></label>
+            <label class="filter-field date-filter"><span>С даты</span><input type="date" id="filter-from" aria-label="Начальная дата" min="1900-01-01" max="2100-12-31"></label>
+            <label class="filter-field date-filter"><span>По дату</span><input type="date" id="filter-to" aria-label="Конечная дата" min="1900-01-01" max="2100-12-31"></label>
+            <button type="button" id="reset-filters" class="reset-button" title="Сбросить фильтры" aria-label="Сбросить фильтры"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button>
+          </form>
+          <div class="table-scroll" id="table-container" aria-busy="true">
+            <table><thead><tr><th scope="col">Расход</th><th scope="col">Участник</th><th scope="col">Дата</th><th scope="col" class="amount-cell">Сумма</th><th scope="col"><span class="visually-hidden">Действия</span></th></tr></thead><tbody id="expense-rows"></tbody></table>
+            <div class="table-state" id="table-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><h3>Загружаем расходы</h3><p>Собираем всё в одном месте.</p></div>
+          </div>
+          <div class="table-footer"><span id="pagination-label">Загрузка…</span><div class="pagination"><button type="button" id="prev-page" class="icon-button" aria-label="Предыдущая страница" disabled>←</button><span id="page-label">1 / 1</span><button type="button" id="next-page" class="icon-button" aria-label="Следующая страница" disabled>→</button></div></div>
+        </section>
+
+        <section class="categories-panel" aria-labelledby="categories-title"><div class="section-heading"><div><div class="eyebrow">КУДА УХОДЯТ ДЕНЬГИ</div><h2 id="categories-title">Расходы по категориям</h2></div><span class="muted caption">По выбранным фильтрам</span></div><div id="category-breakdown" class="category-breakdown"><p class="muted">Загрузка…</p></div></section>
+        <footer class="main-footer"><span>Семейный бюджет</span><span id="timezone-label">Все суммы в рублях</span></footer>
+      </main>
+    </div>
+
+    <dialog id="expense-dialog" class="modal" aria-labelledby="expense-dialog-title">
+      <form id="expense-form">
+        <div class="modal-header"><div><div class="eyebrow">СЕМЕЙНЫЙ БЮДЖЕТ</div><h2 id="expense-dialog-title">Новый расход</h2></div><button type="button" class="icon-button" data-close="expense-dialog" aria-label="Закрыть">×</button></div>
+        <p class="modal-description">Запишите трату — остальное посчитаем.</p>
+        <div class="form-error" id="expense-error" role="alert" hidden></div>
+        <label class="form-field amount-input"><span>Сумма <span class="required">*</span></span><div><input id="expense-amount" name="amount" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" required maxlength="16" aria-describedby="amount-hint"><span>₽</span></div><small id="amount-hint">Больше нуля, до двух знаков после запятой</small></label>
+        <div class="form-grid"><label class="form-field"><span>Категория <span class="required">*</span></span><select id="expense-category" name="category" required></select></label><label class="form-field"><span>Дата расхода <span class="required">*</span></span><input id="expense-date" name="spent_at" type="date" required min="1900-01-01" max="2100-12-31"></label></div>
+        <label class="form-field"><span>Telegram ID участника <span class="required">*</span></span><input id="expense-user" name="user_id" type="text" inputmode="numeric" pattern="[0-9]+" required list="known-users" placeholder="Например, 123456789" maxlength="16" aria-describedby="user-hint"><datalist id="known-users"></datalist><small id="user-hint">Числовой ID владельца расхода. Можно добавить нового участника.</small></label>
+        <label class="form-field"><span>Комментарий <span class="optional">необязательно</span></span><textarea id="expense-comment" name="comment" rows="3" maxlength="500" placeholder="На что потратили?"></textarea></label>
+        <div class="modal-actions"><button type="button" class="button button-secondary" data-close="expense-dialog">Отмена</button><button type="submit" class="button button-primary" id="save-expense">Добавить расход</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-dialog" class="modal small-modal" aria-labelledby="delete-title"><div class="modal-header"><h2 id="delete-title">Удалить расход?</h2><button type="button" class="icon-button" data-close="delete-dialog" aria-label="Закрыть">×</button></div><p class="modal-description" id="delete-description"></p><p class="muted">Эту запись нельзя будет восстановить.</p><div class="form-error" id="delete-error" role="alert" hidden></div><div class="modal-actions"><button type="button" class="button button-secondary" data-close="delete-dialog">Отмена</button><button type="button" class="button button-danger" id="confirm-delete">Удалить</button></div></dialog>
+
+    <dialog id="help-dialog" class="modal" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">Всё начинается с одной траты</h2><button type="button" class="icon-button" data-close="help-dialog" aria-label="Закрыть">×</button></div><div class="help-content"><h3>Общий бюджет в браузере</h3><p>Здесь доступны расходы всех участников. Добавляйте записи, меняйте их и используйте фильтры. Telegram ID связывает расход с его владельцем.</p><h3>Личные расходы в Telegram</h3><p>Напишите боту <code>кофе 350</code> или <code>такси 1200 вчера</code>. Спросите <code>покажи траты за неделю</code>, исправьте <code>последнее было не 350, а 450</code> или попросите <code>удали такси</code>. Бот работает только с вашими расходами и уточняет выбор при нескольких совпадениях.</p><h3 id="bot-mode-title">Режим бота</h3><p id="bot-mode-text">Настройки загружаются с сервера.</p><div class="help-note">Веб-панель по условиям проекта доступна без авторизации и предназначена для доверенного окружения.</div></div><div class="modal-actions"><button type="button" class="button button-primary" data-close="help-dialog">Понятно</button></div></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

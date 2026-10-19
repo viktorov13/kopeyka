@@ -1,0 +1,26 @@
+name: familyexpenses-tests
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: expenses
+      POSTGRES_PASSWORD: expenses
+      POSTGRES_DB: expenses_test
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expenses -d expenses_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  tests:
+    build:
+      context: .
+      target: test
+    environment:
+      TEST_DATABASE_URL: postgres://expenses:expenses@db:5432/expenses_test?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
